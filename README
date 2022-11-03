@@ -1,0 +1,6 @@
+ECE M119 M3: connect the dots
+
+To run:
+- Connect to WiFi network Nano33
+- run `python -m http.server` and navigate to localhost:8000
+- see visualization

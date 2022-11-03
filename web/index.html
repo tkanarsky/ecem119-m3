@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ECE M119 M3</title>
+    <script type="text/javascript" src="smoothie_min.js"></script>
+</head>
+<body>
+<h1 style="font-family: monospace; padding-left: 50px">ECE M119 M3</h1>
+<table style="width:500px">
+    <tr>
+        <th>Acceleration</th>
+        <td>X: <span id="ax">5000</span></td>
+        <td>Y: <span id="ay">5000</span></td>
+        <td>Z: <span id="az">5000</span></td>
+    </tr>
+    <tr>
+        <th>Angular Velocity</th>
+        <td>X: <span id="rx">5000</span></td>
+        <td>Y: <span id="ry">5000</span></td>
+        <td>Z: <span id="rz">5000</span></td>
+    </tr>
+</table>
+<p>Net Acceleration: <span id="na"></span> m/s^2</p>
+<canvas id="linear-acc" width="400" height="200"></canvas>
+<p>Net Angular Velocity: <span id="av"></span> rad/s</p>
+<canvas id="angular-vel" width="400" height="200"></canvas>
+</body>
+<footer>
+    <script>
+        let linear_acc_chart = new SmoothieChart();
+        linear_acc_chart.streamTo(document.getElementById("linear-acc"));
+
+        let angular_vel_chart = new SmoothieChart();
+        angular_vel_chart.streamTo(document.getElementById("angular-vel"));
+
+       
+        let angular_vel = new TimeSeries();
+        let linear_acc = new TimeSeries();
+
+        angular_vel_chart.addTimeSeries(angular_vel, {lineWidth:2});
+        linear_acc_chart.addTimeSeries(linear_acc, {lineWidth:2});
+
+        angular_vel_chart.seriesSet[0].options["strokeStyle"] = '#ffffff';
+        linear_acc_chart.seriesSet[0].options["strokeStyle"] = '#ffffff';
+        
+
+        setInterval(() => {
+            // Send XHR to 192.168.4.1:80, parse returned json and set ax, ay, az, rx, ry, rz to json values
+            const xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status === 200) {
+                    const json = JSON.parse(this.responseText);
+                    document.getElementById("ax").innerHTML = json.ax;
+                    document.getElementById("ay").innerHTML = json.ay;
+                    document.getElementById("az").innerHTML = json.az;
+                    document.getElementById("rx").innerHTML = json.rx;
+                    document.getElementById("ry").innerHTML = json.ry;
+                    document.getElementById("rz").innerHTML = json.rz;
+                    // calculate net acceleration and angular velocity
+                    const na = Math.sqrt(json.ax * json.ax + json.ay * json.ay + json.az * json.az);
+                    const av = Math.sqrt(json.rx * json.rx + json.ry * json.ry + json.rz * json.rz);
+                    angular_vel.append(new Date().getTime(), av);
+                    linear_acc.append(new Date().getTime(), na);
+                }
+            };
+            xhr.open("GET", "http://192.168.4.1:80", true);
+            xhr.send();
+        }, 100);
+    </script>
+</footer>
+</html>
